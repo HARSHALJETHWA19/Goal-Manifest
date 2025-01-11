@@ -9,6 +9,9 @@ sns_client = boto3.client('sns')
 
 # SNS Topic ARN (Update with your SNS Topic ARN)
 SNS_TOPIC_ARN = 'arn:aws:sns:us-east-1:871740193993:GoalNotification'
+S3_BUCKET_NAME = 'goal-manifestation-goals'
+S3_FILE_KEY = 'goals.csv'
+
 
 def fetch_quote():
     """Fetch a random motivational quote from ZenQuotes API."""
@@ -27,13 +30,17 @@ def fetch_quote():
         print(f"Error fetching quote: {e}")
         return "Stay motivated! Keep pushing forward!"
 
-
 def get_random_goal():
-    """Fetch a random goal from the CSV file in S3."""
+    """Fetch a random goal from the CSV file stored in S3."""
     try:
-        # Download the CSV file from S3 (simulate with static data)
-        goals = ["Learn something new", "Work on personal development", "Finish a book", "Exercise regularly"]
-        return random.choice(goals)
+        # Fetch the CSV file from S3
+        s3_object = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=S3_FILE_KEY)
+        csv_data = s3_object['Body'].read().decode('utf-8').splitlines()
+        goals = list(csv.reader(csv_data))
+
+        # Flatten the list of goals and pick a random one
+        goal_list = [goal[0] for goal in goals]
+        return random.choice(goal_list)
     except Exception as e:
         print(f"Error fetching goal: {e}")
         return "Achieve greatness!"
